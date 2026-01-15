@@ -1,0 +1,7 @@
+{
+  "name": "Copy of SmartCampus (智慧校园)",
+  "description": "An AI-powered all-in-one campus assistant for students, featuring personalized learning paths, smart scheduling, mental health support, and resource sharing.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
