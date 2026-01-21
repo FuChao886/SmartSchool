@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Mic, FileText, Sparkles, Loader2, BrainCircuit, MicOff, Volume2, CalendarDays } from 'lucide-react';
-import { askTutor, summarizeNotes, generateStudyPlan } from '../services/geminiService';
+import { askTutorStream, summarizeNotesStream, generateStudyPlanStream } from '../services/geminiService';
 import { ChatMessage } from '../types';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
 
@@ -194,23 +194,35 @@ const LearningAssistant: React.FC = () => {
     setLoading(true);
 
     try {
-      let aiResponse = '';
+      // Initialize an empty message from the model
+      const modelMsg: ChatMessage = { role: 'model', text: '', timestamp: new Date() };
+      setMessages(prev => [...prev, modelMsg]);
+
+      let stream;
       if (activeMode === 'qa') {
-        aiResponse = await askTutor(input);
+        stream = askTutorStream(input);
       } else if (activeMode === 'notes') {
-        aiResponse = await summarizeNotes(input);
+        stream = summarizeNotesStream(input);
       } else {
-        aiResponse = await generateStudyPlan(input, "Student seeking a 7-day plan.");
+        stream = generateStudyPlanStream(input, "Student seeking a 7-day plan.");
       }
       
-      setMessages(prev => [...prev, { 
-        role: 'model', 
-        text: aiResponse || '抱歉，我无法处理这个请求。', 
-        timestamp: new Date() 
-      }]);
+      let fullText = '';
+      for await (const chunk of stream) {
+        if (chunk) {
+          fullText += chunk;
+          setMessages(prev => {
+            const last = prev[prev.length - 1];
+            if (last && last.role === 'model') {
+              return [...prev.slice(0, -1), { ...last, text: fullText }];
+            }
+            return prev;
+          });
+        }
+      }
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'model', text: '请求失败，请检查设置。', timestamp: new Date() }]);
+      setMessages(prev => [...prev, { role: 'model', text: '请求发生错误，请稍后再试。', timestamp: new Date() }]);
     } finally {
       setLoading(false);
     }
@@ -260,7 +272,7 @@ const LearningAssistant: React.FC = () => {
               <div className="w-1 h-4 bg-emerald-400 animate-[bounce_1.2s_infinite]"></div>
               <div className="w-1 h-2 bg-emerald-400 animate-[bounce_0.8s_infinite]"></div>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest">Live Audio</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Live Listening</span>
           </div>
         )}
 
@@ -269,7 +281,7 @@ const LearningAssistant: React.FC = () => {
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[90%] md:max-w-[80%] rounded-2xl p-3 md:p-4 ${
                 m.role === 'user' 
-                  ? 'bg-indigo-600 text-white rounded-tr-none' 
+                  ? 'bg-indigo-600 text-white rounded-tr-none shadow-md' 
                   : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none shadow-sm'
               }`}>
                 <div className="flex items-center space-x-2 mb-1 opacity-60">
@@ -279,23 +291,23 @@ const LearningAssistant: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap">
-                  {m.text}
+                  {m.text || (loading && m.role === 'model' && <span className="italic opacity-50 animate-pulse">正在输入...</span>)}
                 </div>
               </div>
             </div>
           ))}
-          {loading && (
+          {loading && messages[messages.length - 1].text === '' && (
             <div className="flex justify-start">
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center space-x-3">
                 <Loader2 size={16} className="animate-spin text-indigo-600" />
-                <span className="text-xs text-slate-500 italic">正在生成...</span>
+                <span className="text-xs text-slate-500 italic">唤醒 AI 中...</span>
               </div>
             </div>
           )}
         </div>
 
         <div className="p-3 md:p-4 bg-white border-t border-slate-100">
-          <div className="flex items-center space-x-2 bg-slate-50 rounded-2xl px-3 py-1 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+          <div className="flex items-center space-x-2 bg-slate-50 rounded-2xl px-3 py-1 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all shadow-inner">
             <button 
               onClick={startLiveSession}
               className={`p-2 transition-colors ${isLive ? 'text-red-500' : 'text-slate-400 hover:text-indigo-600'}`}
@@ -305,7 +317,7 @@ const LearningAssistant: React.FC = () => {
             <textarea
               rows={1}
               value={input}
-              disabled={isLive}
+              disabled={isLive || loading}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -313,13 +325,13 @@ const LearningAssistant: React.FC = () => {
                   handleSend();
                 }
               }}
-              placeholder={isLive ? "实时语音模式已开启..." : (activeMode === 'qa' ? "问个问题..." : activeMode === 'notes' ? "粘贴文本整理..." : "输入你的学习目标，如：一周攻克托福词汇")}
+              placeholder={isLive ? "实时语音模式已开启..." : (activeMode === 'qa' ? "问个问题..." : activeMode === 'notes' ? "粘贴文本整理..." : "输入你的学习目标...")}
               className="flex-1 bg-transparent border-none focus:ring-0 text-xs md:text-sm py-2 max-h-24 resize-none"
             />
             <button 
               disabled={loading || !input.trim() || isLive}
               onClick={handleSend}
-              className="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
             >
               <Send size={18} />
             </button>

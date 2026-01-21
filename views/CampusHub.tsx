@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Library, 
   UtensilsCrossed, 
@@ -12,11 +12,61 @@ import {
   ChevronRight,
   Clock,
   MapPin,
-  AlertCircle
+  AlertCircle,
+  Coffee,
+  Dumbbell,
+  Sparkles
 } from 'lucide-react';
 
 const CampusHub: React.FC = () => {
-  const [activeFacility, setActiveFacility] = useState('library');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getRecommendation = () => {
+    const hour = currentTime.getHours();
+    if (hour >= 7 && hour < 10) {
+      return {
+        title: "早餐与清晨自习",
+        icon: <Coffee className="text-amber-500" />,
+        desc: "第一食堂的豆浆油条正在热供。图书馆新馆目前仅 15% 占用，是晨读的好地方。",
+        tag: "早间活力"
+      };
+    } else if (hour >= 11 && hour < 14) {
+      return {
+        title: "午餐推荐",
+        icon: <UtensilsCrossed className="text-orange-500" />,
+        desc: "桃源餐厅的特色麻辣烫排队人数较少（约5分钟）。西区食堂新增了低脂沙拉档口。",
+        tag: "午餐时段"
+      };
+    } else if (hour >= 14 && hour < 17) {
+      return {
+        title: "午后专注",
+        icon: <Armchair className="text-blue-500" />,
+        desc: "静思自习室目前环境非常安静。教学楼 B 座的自动贩卖机刚补货了冷萃咖啡。",
+        tag: "高效时段"
+      };
+    } else if (hour >= 17 && hour < 20) {
+      return {
+        title: "晚餐与健身",
+        icon: <Dumbbell className="text-emerald-500" />,
+        desc: "体育馆羽毛球场还有空位。清真食堂的牛肉面口味纯正，适合运动后补充。",
+        tag: "晚间活动"
+      };
+    } else {
+      return {
+        title: "深夜充电",
+        icon: <Zap className="text-purple-500" />,
+        desc: "24小时自习区已开启。请注意回宿舍安全，校园小巴仍在运行中。",
+        tag: "深夜陪伴"
+      };
+    }
+  };
+
+  const recommendation = getRecommendation();
 
   const librarySeats = [
     { name: '第一图书馆', total: 1200, used: 840, status: 'Normal' },
@@ -54,6 +104,36 @@ const CampusHub: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {/* Dynamic Recommendation Section */}
+      <div className="bg-gradient-to-r from-indigo-50 via-white to-indigo-50 p-6 rounded-[2rem] border border-indigo-100 shadow-sm overflow-hidden relative group">
+        <div className="absolute top-[-20px] right-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-500">
+          <Sparkles size={120} className="text-indigo-600" />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
+          <div className="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center text-3xl">
+            {recommendation.icon}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-1">
+              <span className="px-2 py-0.5 bg-indigo-600 text-white text-[9px] font-black uppercase rounded-full tracking-widest animate-pulse">
+                LIVE
+              </span>
+              <h3 className="font-black text-slate-800 text-lg">{recommendation.title}</h3>
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
+              {recommendation.desc}
+            </p>
+          </div>
+          <div className="shrink-0 flex flex-col items-end">
+             <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">{recommendation.tag}</span>
+             <div className="flex items-center space-x-1 mt-1 text-slate-400">
+               <Clock size={12} />
+               <span className="text-xs font-medium">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+             </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Library Seat Status */}
