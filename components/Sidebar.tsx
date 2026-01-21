@@ -6,7 +6,9 @@ import {
   Calendar, 
   HeartPulse, 
   Share2,
-  Coins
+  Coins,
+  MapPin,
+  BarChart3
 } from 'lucide-react';
 import { AppTab } from '../types';
 
@@ -20,15 +22,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: AppTab.DASHBOARD, label: '概览', icon: LayoutDashboard },
     { id: AppTab.LEARNING, label: '助手', icon: GraduationCap },
     { id: AppTab.SCHEDULE, label: '计划', icon: Calendar },
+    { id: AppTab.CAMPUS, label: '生活', icon: MapPin },
     { id: AppTab.HEALTH, label: '心态', icon: HeartPulse },
     { id: AppTab.RESOURCES, label: '资源', icon: Share2 },
+    { id: AppTab.REPORT, label: '成长', icon: BarChart3 },
     { id: AppTab.POINTS, label: '积分', icon: Coins },
   ];
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex w-64 h-screen bg-white border-r border-slate-200 flex-col fixed left-0 top-0 z-20">
+      <div className="hidden md:flex w-64 h-screen bg-white border-r border-slate-200 flex-col fixed left-0 top-0 z-20 overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
@@ -40,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-4">
+        <nav className="flex-1 px-4 space-y-1 mt-4">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -48,14 +52,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive 
-                    ? 'bg-indigo-50 text-indigo-700' 
+                    ? 'bg-indigo-50 text-indigo-700 font-bold' 
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
-                <Icon size={20} />
-                <span className="font-medium text-sm">{item.label}</span>
+                <Icon size={18} />
+                <span className="text-sm">{item.label}</span>
               </button>
             );
           })}
@@ -63,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around px-2 py-2 z-50 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around px-1 py-2 z-50 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.03)] overflow-x-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -71,12 +75,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center flex-1 py-1 rounded-lg transition-colors ${
+              className={`flex flex-col items-center justify-center min-w-[56px] py-1 transition-colors ${
                 isActive ? 'text-indigo-600 font-bold' : 'text-slate-400'
               }`}
             >
-              <Icon size={20} />
-              <span className="text-[9px] mt-1 font-medium">{item.label}</span>
+              <Icon size={18} />
+              <span className="text-[9px] mt-1">{item.label}</span>
             </button>
           );
         })}

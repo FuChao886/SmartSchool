@@ -4,7 +4,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer,
   XAxis, YAxis, AreaChart, Area
 } from 'recharts';
-import { Clock, BookOpen, Star, AlertCircle } from 'lucide-react';
+import { Clock, BookOpen, Star, AlertCircle, Newspaper, ChevronRight } from 'lucide-react';
 import { AppTab } from '../types';
 
 const data = [
@@ -58,6 +58,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, points }) => {
     },
   ];
 
+  const announcements = [
+    { title: '图书馆周末开放时间调整通知', date: '10:00', tag: '通知' },
+    { title: '2024届校园春季招聘会指南', date: '昨天', tag: '就业' },
+    { title: '关于加强校园网安全升级的公告', date: '3天前', tag: '服务' },
+  ];
+
   return (
     <div className="space-y-6">
       <header>
@@ -89,6 +95,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, points }) => {
         <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-slate-800 text-sm md:text-base">学习效率分析</h3>
+            <button 
+              onClick={() => setActiveTab(AppTab.REPORT)}
+              className="text-indigo-600 text-xs font-bold flex items-center hover:underline"
+            >
+              查看成长报告 <ChevronRight size={14} className="ml-1" />
+            </button>
           </div>
           <div className="h-56 md:h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -111,31 +123,30 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, points }) => {
           </div>
         </div>
 
-        {/* Calendar/Tasks Summary */}
+        {/* Campus Announcements */}
         <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-4 text-center text-sm md:text-base">今日行程</h3>
-          <div className="space-y-3">
-            {[
-              { time: '09:00', title: '高等数学课程', tag: '学术', color: 'bg-indigo-100 text-indigo-700' },
-              { time: '14:30', title: '项目小组讨论', tag: '活动', color: 'bg-green-100 text-green-700' },
-              { time: '19:00', title: 'Gemini API 研究', tag: '自习', color: 'bg-purple-100 text-purple-700' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-start space-x-3 p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setActiveTab(AppTab.SCHEDULE)}>
-                <span className="text-[10px] font-semibold text-slate-400 mt-1 whitespace-nowrap">{item.time}</span>
-                <div>
-                  <h4 className="text-xs md:text-sm font-semibold text-slate-700">{item.title}</h4>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block ${item.color}`}>
-                    {item.tag}
-                  </span>
+          <h3 className="font-bold text-slate-800 mb-4 text-sm md:text-base flex items-center">
+            <Newspaper size={18} className="mr-2 text-indigo-600" />
+            校园快讯
+          </h3>
+          <div className="space-y-4">
+            {announcements.map((item, i) => (
+              <div key={i} className="group p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer border-l-2 border-transparent hover:border-indigo-400">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold">{item.tag}</span>
+                  <span className="text-[10px] text-slate-400">{item.date}</span>
                 </div>
+                <h4 className="text-xs font-bold text-slate-700 leading-snug group-hover:text-indigo-600 transition-colors">
+                  {item.title}
+                </h4>
               </div>
             ))}
           </div>
           <button 
-            onClick={() => setActiveTab(AppTab.SCHEDULE)}
-            className="w-full mt-6 py-2 text-xs md:text-sm text-indigo-600 font-medium hover:bg-indigo-50 rounded-xl transition-colors"
+            onClick={() => setActiveTab(AppTab.CAMPUS)}
+            className="w-full mt-6 py-3 bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all"
           >
-            查看完整计划表
+            进入智慧校园 Hub
           </button>
         </div>
       </div>

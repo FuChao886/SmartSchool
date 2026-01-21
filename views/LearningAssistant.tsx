@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Mic, FileText, Sparkles, Loader2, BrainCircuit, MicOff, Volume2, Waveform } from 'lucide-react';
-import { askTutor, summarizeNotes } from '../services/geminiService';
+import { Send, Mic, FileText, Sparkles, Loader2, BrainCircuit, MicOff, Volume2, CalendarDays } from 'lucide-react';
+import { askTutor, summarizeNotes, generateStudyPlan } from '../services/geminiService';
 import { ChatMessage } from '../types';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
 
@@ -50,7 +50,7 @@ const LearningAssistant: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeMode, setActiveMode] = useState<'qa' | 'notes'>('qa');
+  const [activeMode, setActiveMode] = useState<'qa' | 'notes' | 'plan'>('qa');
   const [isLive, setIsLive] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -197,8 +197,10 @@ const LearningAssistant: React.FC = () => {
       let aiResponse = '';
       if (activeMode === 'qa') {
         aiResponse = await askTutor(input);
-      } else {
+      } else if (activeMode === 'notes') {
         aiResponse = await summarizeNotes(input);
+      } else {
+        aiResponse = await generateStudyPlan(input, "Student seeking a 7-day plan.");
       }
       
       setMessages(prev => [...prev, { 
@@ -216,8 +218,8 @@ const LearningAssistant: React.FC = () => {
 
   return (
     <div className="h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)] flex flex-col space-y-4">
-      <div className="flex items-center justify-between space-x-2 md:space-x-4">
-        <div className="flex space-x-2">
+      <div className="flex items-center justify-between space-x-2 md:space-x-4 overflow-x-auto pb-1">
+        <div className="flex space-x-2 shrink-0">
           <button 
             onClick={() => setActiveMode('qa')}
             className={`px-3 md:px-4 py-2 rounded-xl flex items-center justify-center space-x-2 text-xs md:text-sm transition-all ${activeMode === 'qa' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100'}`}
@@ -232,14 +234,21 @@ const LearningAssistant: React.FC = () => {
             <FileText size={16} />
             <span className="hidden sm:inline">笔记整理</span>
           </button>
+          <button 
+            onClick={() => setActiveMode('plan')}
+            className={`px-3 md:px-4 py-2 rounded-xl flex items-center justify-center space-x-2 text-xs md:text-sm transition-all ${activeMode === 'plan' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100'}`}
+          >
+            <CalendarDays size={16} />
+            <span className="hidden sm:inline">计划生成</span>
+          </button>
         </div>
 
         <button
           onClick={startLiveSession}
-          className={`px-4 py-2 rounded-xl flex items-center space-x-2 text-xs md:text-sm font-bold transition-all ${isLive ? 'bg-red-500 text-white animate-pulse' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}
+          className={`px-4 py-2 rounded-xl flex items-center space-x-2 text-xs md:text-sm font-bold transition-all shrink-0 ${isLive ? 'bg-red-500 text-white animate-pulse' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}
         >
           {isLive ? <MicOff size={16} /> : <Volume2 size={16} />}
-          <span>{isLive ? '停止实时回答' : '开启实时回答'}</span>
+          <span>{isLive ? '停止' : '开启'}实时</span>
         </button>
       </div>
 
@@ -251,7 +260,7 @@ const LearningAssistant: React.FC = () => {
               <div className="w-1 h-4 bg-emerald-400 animate-[bounce_1.2s_infinite]"></div>
               <div className="w-1 h-2 bg-emerald-400 animate-[bounce_0.8s_infinite]"></div>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest">Live Audio Active</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Live Audio</span>
           </div>
         )}
 
@@ -279,7 +288,7 @@ const LearningAssistant: React.FC = () => {
             <div className="flex justify-start">
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center space-x-3">
                 <Loader2 size={16} className="animate-spin text-indigo-600" />
-                <span className="text-xs text-slate-500 italic">思考中...</span>
+                <span className="text-xs text-slate-500 italic">正在生成...</span>
               </div>
             </div>
           )}
@@ -304,7 +313,7 @@ const LearningAssistant: React.FC = () => {
                   handleSend();
                 }
               }}
-              placeholder={isLive ? "实时语音模式已开启..." : (activeMode === 'qa' ? "问个问题..." : "粘贴文本整理...")}
+              placeholder={isLive ? "实时语音模式已开启..." : (activeMode === 'qa' ? "问个问题..." : activeMode === 'notes' ? "粘贴文本整理..." : "输入你的学习目标，如：一周攻克托福词汇")}
               className="flex-1 bg-transparent border-none focus:ring-0 text-xs md:text-sm py-2 max-h-24 resize-none"
             />
             <button 

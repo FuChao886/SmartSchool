@@ -46,5 +46,7 @@ export enum AppTab {
   RESOURCES = 'resources',
   POINTS = 'points',
   STUDY_ANALYSIS = 'study_analysis',
-  EXAM_PLAN = 'exam_plan'
+  EXAM_PLAN = 'exam_plan',
+  CAMPUS = 'campus',
+  REPORT = 'report'
 }

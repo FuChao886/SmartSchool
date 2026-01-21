@@ -9,6 +9,8 @@ import ResourceSharing from './views/ResourceSharing';
 import PointsCenter from './views/PointsCenter';
 import StudyAnalysis from './views/StudyAnalysis';
 import ExamPlanning from './views/ExamPlanning';
+import CampusHub from './views/CampusHub';
+import WeeklyReport from './views/WeeklyReport';
 import { AppTab } from './types';
 import { Bell, Search, Settings, User } from 'lucide-react';
 
@@ -34,6 +36,8 @@ const App: React.FC = () => {
       );
       case AppTab.STUDY_ANALYSIS: return <StudyAnalysis />;
       case AppTab.EXAM_PLAN: return <ExamPlanning />;
+      case AppTab.CAMPUS: return <CampusHub />;
+      case AppTab.REPORT: return <WeeklyReport />;
       default: return <Dashboard setActiveTab={setActiveTab} points={userPoints} />;
     }
   };

@@ -1,14 +1,17 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-
 export const MODELS = {
   FAST: 'gemini-3-flash-preview',
   PRO: 'gemini-3-pro-preview',
 };
 
+function getAI() {
+  return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+}
+
 export async function askTutor(question: string, context?: string) {
+  const ai = getAI();
   const systemInstruction = `You are a helpful university academic tutor. 
     Break down complex concepts into simple steps. 
     If asked to solve a problem, show the logical derivation.
@@ -23,6 +26,7 @@ export async function askTutor(question: string, context?: string) {
 }
 
 export async function summarizeNotes(rawText: string) {
+  const ai = getAI();
   const systemInstruction = "You are a note-taking expert. Convert the following transcript or text into a structured, hierarchical set of notes with key takeaways and definitions. Use Markdown formatting.";
   
   const response = await ai.models.generateContent({
@@ -34,6 +38,7 @@ export async function summarizeNotes(rawText: string) {
 }
 
 export async function analyzeMood(text: string) {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: MODELS.FAST,
     contents: `Analyze the mood of this journal entry and provide empathetic feedback and one small actionable self-care tip. Journal: "${text}"`,
@@ -59,6 +64,7 @@ export async function analyzeMood(text: string) {
 }
 
 export async function analyzeStudySession(subject: string, duration: string, details: string, confidence: string) {
+  const ai = getAI();
   const prompt = `Student studied ${subject} for ${duration} minutes. Details: ${details}. Confidence level: ${confidence}/5.`;
   const response = await ai.models.generateContent({
     model: MODELS.PRO,
@@ -85,7 +91,49 @@ export async function analyzeStudySession(subject: string, duration: string, det
   }
 }
 
+export async function generateStudyPlan(goals: string, currentStatus: string) {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: MODELS.PRO,
+    contents: `Goals: ${goals}. Current status: ${currentStatus}`,
+    config: {
+      systemInstruction: "You are a learning strategist. Create a detailed 7-day study plan with daily tasks, breakdown of concepts, and rest intervals. Use clear Chinese Markdown.",
+    },
+  });
+  return response.text;
+}
+
+export async function generateComprehensiveReport(data: any) {
+  const ai = getAI();
+  const prompt = `Based on study hours: ${JSON.stringify(data.study)}, mood log: ${JSON.stringify(data.mood)}, and points: ${data.points}.`;
+  const response = await ai.models.generateContent({
+    model: MODELS.PRO,
+    contents: prompt,
+    config: {
+      systemInstruction: "Generate a comprehensive growth report for a university student. Provide a score for 'Health Balance' and 'Study Consistency'. Provide one deep insight and one warning if applicable. Format as JSON.",
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          healthScore: { type: Type.NUMBER },
+          studyScore: { type: Type.NUMBER },
+          insight: { type: Type.STRING },
+          warning: { type: Type.STRING },
+          nextWeekGoal: { type: Type.STRING }
+        },
+        required: ["healthScore", "studyScore", "insight", "nextWeekGoal"]
+      }
+    }
+  });
+  try {
+    return JSON.parse(response.text || '{}');
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function generateExamRevisionPlan(exams: any[]) {
+  const ai = getAI();
   const examsStr = exams.map(e => `${e.subject} on ${e.date} (Difficulty: ${e.difficulty})`).join(', ');
   const prompt = `Create a prioritized revision schedule for the following exams: ${examsStr}. The plan should focus more time on harder exams and those that are sooner.`;
   
