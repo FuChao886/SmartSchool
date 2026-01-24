@@ -1,16 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Search,
-  Download,
-  Star,
-  FileText,
-  Book,
-  GraduationCap,
-  UploadCloud,
-  ArrowUpRight,
+  Search, Download, Star, FileText, Book, GraduationCap, UploadCloud, ArrowUpRight,
 } from "lucide-react";
 import { Resource } from "../types";
-import { useResourceStore, toggleBookmark, addRecent } from "../services/resourceStore";
+import { addRecent, getBookmarks, getRecents, toggleBookmark } from "../services/resourceStore";
+
 
 // 扩展类型（不改全局 types）
 type ResourceItem = Resource & {
