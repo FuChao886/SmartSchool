@@ -1,4 +1,6 @@
 // services/resourceStore.ts
+import { useSyncExternalStore } from "react";
+
 export type RecentItem = { id: string; ts: number };
 
 const KEY_BOOKMARKS = "smartschool_bookmarks_v1";
@@ -23,7 +25,30 @@ function saveJSON(key: string, value: any) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-// ===== 收藏 =====
+/** ========= 订阅机制：让 React 知道数据变了 ========= */
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+function notify() {
+  listeners.forEach((l) => l());
+}
+
+export function subscribe(listener: Listener) {
+  listeners.add(listener);
+
+  // 跨标签页同步：别的tab改了本tab也更新
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === KEY_BOOKMARKS || e.key === KEY_RECENTS) notify();
+  };
+  if (typeof window !== "undefined") window.addEventListener("storage", onStorage);
+
+  return () => {
+    listeners.delete(listener);
+    if (typeof window !== "undefined") window.removeEventListener("storage", onStorage);
+  };
+}
+
+/** ========= 收藏 ========= */
 export function getBookmarks(): string[] {
   return loadJSON<string[]>(KEY_BOOKMARKS, []);
 }
@@ -38,10 +63,11 @@ export function toggleBookmark(id: string): string[] {
   else set.add(id);
   const arr = Array.from(set);
   saveJSON(KEY_BOOKMARKS, arr);
+  notify(); // ✅ 通知页面刷新
   return arr;
 }
 
-// ===== 最近浏览 =====
+/** ========= 最近 ========= */
 export function getRecents(): RecentItem[] {
   return loadJSON<RecentItem[]>(KEY_RECENTS, []);
 }
@@ -52,5 +78,18 @@ export function addRecent(id: string): RecentItem[] {
   list.unshift({ id, ts: now });
   const trimmed = list.slice(0, 30);
   saveJSON(KEY_RECENTS, trimmed);
+  notify(); // ✅ 通知页面刷新
   return trimmed;
+}
+
+/** ========= 给 React 用的 hook（最省事） ========= */
+function getSnapshot() {
+  return { bookmarks: getBookmarks(), recents: getRecents() };
+}
+function getServerSnapshot() {
+  return { bookmarks: [], recents: [] as RecentItem[] };
+}
+
+export function useResourceStore() {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
